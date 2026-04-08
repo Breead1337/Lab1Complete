@@ -1,0 +1,50 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Forms;
+
+public class Trip
+{
+    public string Destination { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public decimal Budget { get; set; }
+    public List<Expense> Expenses { get; set; }
+
+    public Trip(string destination, DateTime startDate, DateTime endDate, decimal budget)
+    {
+        Destination = destination;
+        StartDate = startDate;
+        EndDate = endDate;
+        Budget = budget;
+        Expenses = new List<Expense>();
+    }
+
+    public void AddExpense(Expense expense)
+    {
+        Expenses.Add(expense);
+        MessageBox.Show($"Расход добавлен: {expense.Amount} на {expense.Description}.");
+    }
+
+    public decimal CalculateTotalExpenses()
+    {
+        return Expenses.Sum(e => e.Amount);
+    }
+
+    public decimal RemainingBudget()
+    {
+        return CalculateTotalExpenses() - Budget;
+    }
+}
+
+public class Expense
+{
+    public string Description { get; set; }
+    public decimal Amount { get; set; }
+
+    public Expense(string description, decimal amount)
+    {
+        Description = description;
+        Amount = amount;
+    }
+}
