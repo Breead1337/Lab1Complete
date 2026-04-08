@@ -15,6 +15,13 @@ namespace TravelManager
 
         public Trip(string destination, DateTime startDate, DateTime endDate, decimal budget)
         {
+            if (string.IsNullOrWhiteSpace(destination))
+                throw new ArgumentException("Пункт назначения не может быть пустым");
+            if (endDate < startDate)
+                throw new ArgumentException("Дата окончания не может быть раньше даты начала");
+            if (budget <= 0)
+                throw new ArgumentException("Бюджет должен быть больше нуля");
+
             Destination = destination;
             StartDate = startDate;
             EndDate = endDate;
@@ -24,6 +31,7 @@ namespace TravelManager
 
         public void AddExpense(Expense expense)
         {
+            if (expense == null) throw new ArgumentNullException(nameof(expense));
             Expenses.Add(expense);
             MessageBox.Show($"Расход добавлен: {expense.Amount} руб. - {expense.Description}");
         }
