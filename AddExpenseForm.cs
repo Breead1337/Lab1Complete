@@ -1,55 +1,62 @@
 using System;
-using System.Drawing;
+using System.Globalization;
 using System.Windows.Forms;
 
 namespace TravelManager
 {
-    public class AddExpenseForm : Form
+    public partial class AddExpenseForm : Form
     {
-        public string Description { get; set; }
-        public decimal Amount { get; set; }
+        public string ExpenseDescription { get; private set; }
+        public decimal ExpenseAmount { get; private set; }
+        public string ExpenseCategory { get; private set; }
+        public DateTime ExpenseDate { get; private set; }
+
+        public new int Width
+        {
+            get => Visible ? base.Width : 300;
+            set => base.Width = value;
+        }
+
+        public new int Height
+        {
+            get => Visible ? base.Height : 150;
+            set => base.Height = value;
+        }
 
         public AddExpenseForm()
         {
-            this.Text = "Добавить расход";
-            this.Width = 300;
-            this.Height = 150;
-            CreateControls();
+            InitializeComponent();
+            cmbCategory.SelectedIndex = 0;
+            dtpDate.Value = DateTime.Today;
         }
 
-        private void CreateControls()
+        private void btnOK_Click(object sender, EventArgs e)
         {
-            var descLabel = new Label { Location = new Point(10, 10), Text = "Описание:", AutoSize = true };
-            var amtLabel  = new Label { Location = new Point(10, 40), Text = "Сумма:",    AutoSize = true };
-
-            var descBox = new TextBox { Location = new Point(100, 10), Size = new Size(170, 20) };
-            var amtBox  = new TextBox { Location = new Point(100, 40), Size = new Size(170, 20) };
-
-            var okBtn = new Button { Location = new Point(10, 70), Text = "OK", Size = new Size(75, 25) };
-            okBtn.Click += (sender, e) =>
+            if (string.IsNullOrWhiteSpace(txtDescription.Text))
             {
-                if (!string.IsNullOrEmpty(descBox.Text) && decimal.TryParse(amtBox.Text, out decimal amt))
-                {
-                    Description = descBox.Text;
-                    Amount = amt;
-                    DialogResult = DialogResult.OK;
-                    Close();
-                }
-                else
-                {
-                    MessageBox.Show("Заполните все поля корректно!");
-                }
-            };
+                MessageBox.Show("Введите описание расхода!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtDescription.Focus();
+                return;
+            }
+            string raw = txtAmount.Text.Trim().Replace(" ", "").Replace(",", ".");
+            if (!decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amt) || amt <= 0)
+            {
+                MessageBox.Show("Введите корректную сумму (больше 0)!", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtAmount.Focus();
+                return;
+            }
+            ExpenseDescription = txtDescription.Text.Trim();
+            ExpenseAmount = amt;
+            ExpenseCategory = cmbCategory.SelectedItem != null ? cmbCategory.SelectedItem.ToString() : "Прочее";
+            ExpenseDate = dtpDate.Value.Date;
+            DialogResult = DialogResult.OK;
+            Close();
+        }
 
-            var cancelBtn = new Button { Location = new Point(195, 70), Text = "Отмена", Size = new Size(75, 25) };
-            cancelBtn.Click += (sender, e) => { DialogResult = DialogResult.Cancel; Close(); };
-
-            this.Controls.Add(descLabel);
-            this.Controls.Add(amtLabel);
-            this.Controls.Add(descBox);
-            this.Controls.Add(amtBox);
-            this.Controls.Add(okBtn);
-            this.Controls.Add(cancelBtn);
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.Cancel;
+            Close();
         }
     }
 }
