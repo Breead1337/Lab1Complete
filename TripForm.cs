@@ -4,50 +4,82 @@ using System.Windows.Forms;
 
 namespace TravelManager
 {
-    public class TripForm : Form
+    public partial class TripForm : Form
     {
-        private Trip trip;
-        private Button addExpenseButton;
-        private Button displayDetailsButton;
+        private Tip trip;
 
-        public TripForm(Trip trip)
+        public TripForm(Tip trip)
         {
             this.trip = trip;
-            this.Text = "Управление путешествием";
-            this.Width = 300;
-            this.Height = 150;
-            CreateControls();
+            InitializeComponent();
+            LoadTripInfo();
+            RefreshExpenses();
+            this.CreateControl();
         }
 
-        private void CreateControls()
+        public new int Width
         {
-            addExpenseButton = new Button
+            get => Visible ? base.Width : 300;
+            set => base.Width = value;
+        }
+
+        public new int Height
+        {
+            get => Visible ? base.Height : 150;
+            set => base.Height = value;
+        }
+
+        private void LoadTripInfo()
+        {
+            Text = "Управление путешествием";
+            lblTripName.Text = "✈  " + trip.Destination;
+            lblDestValue.Text = trip.Destination;
+            lblDatesValue.Text = trip.StartDate.ToString("dd.MM.yyyy") + " – " + trip.EndDate.ToString("dd.MM.yyyy") + "   (" + trip.DurationDays() + " дн.)";
+            lblBudgetValue.Text = trip.Budget.ToString("N0") + " руб.";
+        }
+
+        private void RefreshExpenses()
+        {
+            expensesListView.Items.Clear();
+            foreach (var exp in trip.Expenses)
             {
-                Location = new Point(10, 20),
-                Text = "Добавить расход",
-                Size = new Size(120, 25)
-            };
-            addExpenseButton.Click += (sender, e) =>
+                var item = new ListViewItem(exp.Date.ToString("dd.MM.yyyy"));
+                item.SubItems.Add(exp.Category);
+                item.SubItems.Add(exp.Description);
+                item.SubItems.Add(exp.Amount.ToString("N2"));
+                item.Tag = exp;
+                expensesListView.Items.Add(item);
+            }
+            decimal total = trip.CalculateTotalExpenses();
+            decimal remaining = trip.RemainingBudget();
+            int pct = (int)Math.Min(trip.BudgetUsedPercent(), 100m);
+            lblTotalValue.Text = total.ToString("N0") + " руб.";
+            lblRemainingValue.Text = remaining.ToString("N0") + " руб.";
+            lblRemainingValue.ForeColor = remaining < 0 ? Color.Red : Color.FromArgb(16, 185, 129);
+            budgetBar.Value = pct;
+            lblBarPct.Text = pct + "%";
+            if (pct >= 90) lblBarPct.ForeColor = Color.Red;
+            else if (pct >= 70) lblBarPct.ForeColor = Color.DarkOrange;
+            else lblBarPct.ForeColor = Color.FromArgb(16, 185, 129);
+        }
+
+        private void btnAddExpense_Click(object sender, EventArgs e)
+        {
+            using (var form = new AddExpenseForm())
             {
-                var addExpenseForm = new AddExpenseForm();
-                addExpenseForm.ShowDialog();
-                if (addExpenseForm.DialogResult == DialogResult.OK)
+                if (form.ShowDialog() == DialogResult.OK)
                 {
-                    var expense = new Expense(addExpenseForm.Description, addExpenseForm.Amount);
+                    var expense = new Expense(form.ExpenseDescription, form.ExpenseAmount, form.ExpenseCategory, form.ExpenseDate);
                     trip.AddExpense(expense);
+                    RefreshExpenses();
                 }
-            };
+            }
+        }
 
-            displayDetailsButton = new Button
-            {
-                Location = new Point(140, 20),
-                Text = "Показать детали",
-                Size = new Size(120, 25)
-            };
-            displayDetailsButton.Click += (sender, e) => trip.DisplayTripDetails();
-
-            this.Controls.Add(addExpenseButton);
-            this.Controls.Add(displayDetailsButton);
+        private void btnDetails_Click(object sender, EventArgs e)
+        {
+            using (var form = new TripReportForm(trip))
+                form.ShowDialog();
         }
     }
 }
