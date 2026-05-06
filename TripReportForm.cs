@@ -1,48 +1,51 @@
 using System;
 using System.Drawing;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace TravelManager
 {
-    public class TripReportForm : Form
+    public partial class TripReportForm : Form
     {
-        private readonly Trip trip;
+        private readonly Tip trip;
 
-        public TripReportForm(Trip trip)
+        public TripReportForm(Tip trip)
         {
             this.trip = trip;
-            this.Text = "Отчёт по путешествию";
-            this.Width = 400;
-            this.Height = 300;
-            CreateControls();
+            InitializeComponent();
+            LoadTripData();
         }
 
-        private void CreateControls()
+        private void LoadTripData()
         {
-            var destLabel  = new Label { Location = new Point(10, 10),  Text = "Пункт назначения:", AutoSize = true };
-            var startLabel = new Label { Location = new Point(10, 35),  Text = "Дата начала:",       AutoSize = true };
-            var endLabel   = new Label { Location = new Point(10, 60),  Text = "Дата окончания:",    AutoSize = true };
-            var budLabel   = new Label { Location = new Point(10, 85),  Text = "Бюджет:",            AutoSize = true };
-            var totLabel   = new Label { Location = new Point(10, 110), Text = "Общие расходы:",     AutoSize = true };
-            var remLabel   = new Label { Location = new Point(10, 135), Text = "Осталось:",          AutoSize = true };
-
-            var destVal  = new Label { Location = new Point(160, 10),  Text = trip.Destination,                         AutoSize = true };
-            var startVal = new Label { Location = new Point(160, 35),  Text = trip.StartDate.ToString("dd.MM.yyyy"),     AutoSize = true };
-            var endVal   = new Label { Location = new Point(160, 60),  Text = trip.EndDate.ToString("dd.MM.yyyy"),       AutoSize = true };
-            var budVal   = new Label { Location = new Point(160, 85),  Text = $"{trip.Budget} руб.",                    AutoSize = true };
-            var totVal   = new Label { Location = new Point(160, 110), Text = $"{trip.CalculateTotalExpenses()} руб.",   AutoSize = true };
-            var remVal   = new Label { Location = new Point(160, 135), Text = $"{trip.RemainingBudget()} руб.",          AutoSize = true };
-
-            var listBox = new ListBox { Location = new Point(10, 165), Size = new Size(360, 100) };
+            lblTripTitle.Text = "Отчёт: " + trip.Destination;
+            destVal.Text = trip.Destination;
+            startVal.Text = trip.StartDate.ToString("dd.MM.yyyy");
+            endVal.Text = trip.EndDate.ToString("dd.MM.yyyy");
+            durationVal.Text = trip.DurationDays() + " дн.";
+            budVal.Text = trip.Budget.ToString("N0") + " руб.";
+            decimal total = trip.CalculateTotalExpenses();
+            decimal remaining = trip.RemainingBudget();
+            totVal.Text = total.ToString("N0") + " руб.";
+            remVal.Text = remaining.ToString("N0") + " руб.";
+            remVal.ForeColor = remaining < 0 ? Color.Red : Color.FromArgb(16, 185, 129);
+            int pct = trip.Budget > 0 ? (int)Math.Min((total / trip.Budget) * 100m, 100m) : 0;
+            budgetBar.Value = pct;
+            lblPct.Text = pct + "%  бюджета";
+            lblPct.ForeColor = pct >= 90 ? Color.Red : pct >= 70 ? Color.DarkOrange : Color.Gray;
+            expensesListView.Items.Clear();
             foreach (var exp in trip.Expenses)
-                listBox.Items.Add($"{exp.Description} — {exp.Amount} руб.");
+            {
+                var item = new ListViewItem(exp.Date.ToString("dd.MM.yyyy"));
+                item.SubItems.Add(exp.Category);
+                item.SubItems.Add(exp.Description);
+                item.SubItems.Add(exp.Amount.ToString("N2"));
+                expensesListView.Items.Add(item);
+            }
+        }
 
-            this.Controls.AddRange(new Control[] {
-                destLabel, startLabel, endLabel, budLabel, totLabel, remLabel,
-                destVal,  startVal,  endVal,  budVal,  totVal,  remVal,
-                listBox
-            });
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }
